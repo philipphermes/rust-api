@@ -6,29 +6,12 @@ mod model;
 mod repository;
 mod api;
 
-
-use actix_web::{web::Data, get, Responder, Result, App, HttpServer};
-use serde::{Serialize};
-use actix_web::web::{Json};
+use actix_web::{web::Data, App, HttpServer};
 
 use crate::db_client::DbClient;
 use crate::repository::user_repository::UserRepo;
 use crate::api::user::{create_user, get_user};
-
-
-#[derive(Serialize)]
-struct Message {
-    message: String,
-}
-
-#[get("/")]
-async fn index() -> Result<impl Responder> {
-    let obj = Message {
-        message: "Hello".to_string(),
-    };
-    Ok(Json(obj))
-}
-
+use crate::api::index::{index};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
