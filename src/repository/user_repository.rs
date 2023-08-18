@@ -4,8 +4,9 @@ use actix_web::web::Data;
 use mongodb::{bson::{extjson::de::Error, doc}, Collection};
 use mongodb::results::InsertOneResult;
 use serde::de::Error as DefaultError;
+
 use crate::db_client::DbClient;
-use crate::user::User;
+use crate::model::user::User;
 
 pub struct UserRepo {
     pub col: Collection<User>,
@@ -42,7 +43,13 @@ impl UserRepo {
         if user.is_err() {
             Err(DefaultError::custom(user.err().unwrap().to_string()))
         } else {
-            Ok(user.ok().unwrap().unwrap())
+            let user_data = user.ok().unwrap();
+
+            if user_data == None {
+                return Err(DefaultError::custom("User not found"));
+            }
+
+            Ok(user_data.unwrap())
         }
     }
 }

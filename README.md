@@ -11,7 +11,7 @@ cargo run
 * http://127.0.0.1:8000/
   * GET
   * Hello World
-* http://127.0.0.1:8000/user/get/{email}
+* http://127.0.0.1:8000/user/{email}
   * GET
   * Get user with email
 * http://127.0.0.1:8000/user/create
