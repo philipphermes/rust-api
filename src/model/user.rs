@@ -6,4 +6,5 @@ pub struct User {
     pub id: Option<String>,
     pub email: String,
     pub password: String,
+    pub token: String,
 }

@@ -1,4 +1,4 @@
-use actix_web::{web::Data, HttpResponse, post, get};
+use actix_web::{web::Data, HttpResponse, post, get, delete};
 use actix_web::web::{Json, Path};
 use mongodb::bson::Uuid;
 
@@ -10,6 +10,18 @@ async fn get_user(user_repo: Data<UserRepo>, path: Path<String>) -> HttpResponse
     let email = path.into_inner();
 
     let user_detail = user_repo.get_user_by_email(&email).await;
+
+    match user_detail {
+        Ok(course) => HttpResponse::Ok().json(course),
+        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+    }
+}
+
+#[delete("/user/{id}/delete")]
+async fn delete_user(user_repo: Data<UserRepo>, path: Path<String>) -> HttpResponse {
+    let id = path.into_inner();
+
+    let user_detail = user_repo.delete_user(&id).await;
 
     match user_detail {
         Ok(course) => HttpResponse::Ok().json(course),
@@ -29,6 +41,7 @@ pub async fn create_user(user_repo: Data<UserRepo>, new_user: Json<User>) -> Htt
         id: Option::from(Uuid::new().to_string()),
         email: new_user.email.to_owned(),
         password: new_user.password.to_owned(),
+        token: "".to_string(),
     };
     let user_detail = user_repo.create_user(data.clone()).await;
     match user_detail {

@@ -10,8 +10,9 @@ use actix_web::{web::Data, App, HttpServer};
 
 use crate::db_client::DbClient;
 use crate::repository::user_repository::UserRepo;
-use crate::api::user::{create_user, get_user};
+use crate::api::user::{create_user, get_user, delete_user};
 use crate::api::index::{index};
+use crate::api::auth::{auth, logout, login};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -25,9 +26,13 @@ async fn main() -> std::io::Result<()> {
         App::new()
             .app_data(db_data.clone())
             .app_data(user_repository_data.clone())
+            .service(login)
+            .service(auth)
+            .service(logout)
             .service(index)
             .service(get_user)
             .service(create_user)
+            .service(delete_user)
     })
         .bind(("127.0.0.1", 8000))?
         .run()
