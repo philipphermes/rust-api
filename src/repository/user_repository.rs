@@ -2,12 +2,14 @@ extern crate dotenv;
 
 use actix_web::web::{Data};
 use mongodb::{bson::{extjson::de::Error, doc}, Collection};
+use mongodb::bson::Uuid;
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use serde::de::Error as DefaultError;
 use pwhash::bcrypt;
 
 use crate::db_client::DbClient;
 use crate::model::user::User;
+use crate::model::user::UserUpdateCreate;
 
 pub struct UserRepo {
     pub col: Collection<User>,
@@ -19,13 +21,17 @@ impl UserRepo {
         UserRepo { col }
     }
 
-    pub async fn create_user(&self, mut new_user: User) -> Result<InsertOneResult, Error> {
-        let hashed_password = bcrypt::hash(new_user.password.to_string()).unwrap();
-        new_user.password = hashed_password;
+    pub async fn create_user(&self, new_user: UserUpdateCreate) -> Result<InsertOneResult, Error> {
+        let user = User {
+            id: Option::from(Uuid::new().to_string()),
+            email: new_user.email,
+            password: bcrypt::hash(new_user.password.to_string()).unwrap(),
+            token: "".to_string()
+        };
 
         let user = self
             .col
-            .insert_one(new_user, None)
+            .insert_one(user, None)
             .await;
 
         if user.is_err() {
@@ -35,16 +41,13 @@ impl UserRepo {
         }
     }
 
-    pub async fn update_user(&self, id: &String, mut update_user: User) -> Result<UpdateResult, Error> {
-        let hashed_password = bcrypt::hash(update_user.password.to_string()).unwrap();
-        update_user.password = hashed_password;
-
-        let filter = doc! {"_id": id};
+    pub async fn update_user(&self, update_user: UserUpdateCreate) -> Result<UpdateResult, Error> {
+        let filter = doc! {"_id": update_user.id};
         let new_user = doc! {
                 "$set":
                     {
                         "email": update_user.email,
-                        "password": update_user.password,
+                        "password": bcrypt::hash(update_user.password.to_string()).unwrap(),
                     },
             };
         let updated_user = self

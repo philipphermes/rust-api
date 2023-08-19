@@ -1,51 +1,74 @@
-use actix_web::{web::Data, HttpResponse, post, get, delete};
-use actix_web::web::{Json, Path};
-use mongodb::bson::Uuid;
+use actix_web::{web::Data, HttpResponse, post, get, delete, patch};
+use actix_web::web::{Json};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 use crate::repository::user_repository::UserRepo;
-use crate::model::user::User;
+use crate::model::user::{User, UserOutput, UserUpdateCreate};
+use crate::api::auth::auth;
 
-#[get("/user/{email}")]
-async fn get_user(user_repo: Data<UserRepo>, path: Path<String>) -> HttpResponse {
-    let email = path.into_inner();
-
-    let user_detail = user_repo.get_user_by_email(&email).await;
+#[get("/user")]
+async fn get_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpResponse {
+    let user_detail = auth(user_repo, bearer_auth.token()).await;
 
     match user_detail {
-        Ok(course) => HttpResponse::Ok().json(course),
+        Ok(user) => {
+            let user_out = UserOutput {
+                id: user.id,
+                email: user.email
+            };
+
+            HttpResponse::Ok().json(user_out)
+        },
+        Err(_err) => HttpResponse::Unauthorized().json("Invalid credentials"),
+    }
+}
+
+#[delete("/user/delete")]
+async fn delete_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpResponse {
+    let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
+
+    let current_user: User = match user_detail {
+        Ok(user) => user,
+        Err(_err) => return HttpResponse::Unauthorized().json("Invalid credentials"),
+    };
+
+    let user_delete = user_repo.delete_user(&current_user.id.unwrap()).await;
+
+    match user_delete {
+        Ok(_user) => HttpResponse::Ok().json("User was deleted"),
         Err(err) => HttpResponse::NotFound().body(err.to_string()),
     }
 }
 
-#[delete("/user/{id}/delete")]
-async fn delete_user(user_repo: Data<UserRepo>, path: Path<String>) -> HttpResponse {
-    let id = path.into_inner();
-
-    let user_detail = user_repo.delete_user(&id).await;
+#[patch("/user/update")]
+async fn update_user(user_repo: Data<UserRepo>, update_user: Json<UserUpdateCreate>, bearer_auth: BearerAuth) -> HttpResponse {
+    let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
     match user_detail {
-        Ok(course) => HttpResponse::Ok().json(course),
+        Ok(_user) => (),
+        Err(_err) => return HttpResponse::Unauthorized().json("Invalid credentials"),
+    }
+
+    let user_update = user_repo.update_user(update_user.clone()).await;
+
+    match user_update {
+        Ok(_user) => HttpResponse::Ok().json("User was updated"),
         Err(err) => HttpResponse::NotFound().body(err.to_string()),
     }
 }
 
 #[post("/user/create")]
-pub async fn create_user(user_repo: Data<UserRepo>, new_user: Json<User>) -> HttpResponse {
+pub async fn create_user(user_repo: Data<UserRepo>, new_user: Json<UserUpdateCreate>) -> HttpResponse {
     let user_detail = user_repo.get_user_by_email(new_user.email.as_str()).await;
 
     if !user_detail.is_err() {
         return HttpResponse::Ok().json("Email already in use");
     }
 
-    let data = User {
-        id: Option::from(Uuid::new().to_string()),
-        email: new_user.email.to_owned(),
-        password: new_user.password.to_owned(),
-        token: "".to_string(),
-    };
-    let user_detail = user_repo.create_user(data.clone()).await;
+    let user_detail = user_repo.create_user(new_user.clone()).await;
+
     match user_detail {
-        Ok(_user) => HttpResponse::Ok().json(data),
+        Ok(_user) => HttpResponse::Ok().json(new_user),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }

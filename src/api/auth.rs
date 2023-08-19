@@ -1,19 +1,16 @@
 use actix_web::{web::Data, HttpResponse, post};
 use actix_web::web::{Json};
+use actix_web_httpauth::extractors::bearer::BearerAuth;
 use mongodb::bson::Uuid;
 use pwhash::bcrypt;
-use serde::{Serialize, Deserialize};
+use mongodb::bson::extjson::de::Error;
 
 use crate::repository::user_repository::UserRepo;
 use crate::model::user::User;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Token {
-    token: String,
-}
+use crate::model::user::UserUpdateCreate;
 
 #[post("/auth/login")]
-pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<User>) -> HttpResponse {
+pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<UserUpdateCreate>) -> HttpResponse {
     let user_detail = user_repo.get_user_by_email(auth_user.email.as_str()).await;
 
     let current_user: User = match user_detail {
@@ -26,6 +23,12 @@ pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<User>) -> HttpResp
     }
 
     let user_update = user_repo.update_token(current_user.id, Uuid::new().to_string()).await;
+
+    match user_update {
+        Ok(_user) => (),
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+    }
+
     let user_detail = user_repo.get_user_by_email(auth_user.email.as_str()).await;
 
     match user_detail {
@@ -34,26 +37,13 @@ pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<User>) -> HttpResp
     }
 }
 
-#[post("/auth")]
-pub async fn auth(user_repo: Data<UserRepo>, token: Json<Token>) -> HttpResponse {
-    let user_detail = user_repo.get_user_by_token(token.token.as_str()).await;
-
-    let current_user: User = match user_detail {
-        Ok(user) => user,
-        Err(_err) => return HttpResponse::Unauthorized().json("Invalid credentials"),
-    };
-
-    if current_user.token != "" && token.token == current_user.token {
-        return HttpResponse::Ok().json(current_user.token)
-    } else {
-        HttpResponse::Unauthorized().json("Invalid credentials")
-    }
+pub async fn auth(user_repo: Data<UserRepo>, token: &str) -> Result<User, Error> {
+    user_repo.get_user_by_token(token).await
 }
 
-
 #[post("/auth/logout")]
-pub async fn logout(user_repo: Data<UserRepo>, token: Json<Token>) -> HttpResponse {
-    let user_detail = user_repo.get_user_by_token(token.token.as_str()).await;
+pub async fn logout(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpResponse {
+    let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
     let current_user: User = match user_detail {
         Ok(user) => user,
