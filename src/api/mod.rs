@@ -1,3 +1,2 @@
-pub mod index;
-pub mod user;
-pub mod auth;
+pub mod storefront;
+pub mod admin;

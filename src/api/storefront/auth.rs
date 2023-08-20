@@ -9,7 +9,7 @@ use crate::repository::user_repository::UserRepo;
 use crate::model::user::User;
 use crate::model::user::UserUpdateCreate;
 
-#[post("/auth/login")]
+#[post("/storefront/login")]
 pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<UserUpdateCreate>) -> HttpResponse {
     let user_detail = user_repo.get_user_by_email(auth_user.email.as_str()).await;
 
@@ -37,11 +37,7 @@ pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<UserUpdateCreate>)
     }
 }
 
-pub async fn auth(user_repo: Data<UserRepo>, token: &str) -> Result<User, Error> {
-    user_repo.get_user_by_token(token).await
-}
-
-#[post("/auth/logout")]
+#[post("/storefront/logout")]
 pub async fn logout(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpResponse {
     let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
@@ -56,4 +52,8 @@ pub async fn logout(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpR
         Ok(_user) => HttpResponse::Ok().json("logged out"),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
+}
+
+pub async fn auth(user_repo: Data<UserRepo>, token: &str) -> Result<User, Error> {
+    user_repo.get_user_by_token(token).await
 }

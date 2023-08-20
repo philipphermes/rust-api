@@ -21,12 +21,13 @@ impl UserRepo {
         UserRepo { col }
     }
 
-    pub async fn create_user(&self, new_user: UserUpdateCreate) -> Result<InsertOneResult, Error> {
+    pub async fn create_user(&self, new_user: UserUpdateCreate, roles: Vec<String>) -> Result<InsertOneResult, Error> {
         let user = User {
             id: Option::from(Uuid::new().to_string()),
             email: new_user.email,
             password: bcrypt::hash(new_user.password.to_string()).unwrap(),
-            token: "".to_string()
+            token: "".to_string(),
+            roles
         };
 
         let user = self

@@ -10,9 +10,9 @@ use actix_web::{web::Data, App, HttpServer};
 
 use crate::db_client::DbClient;
 use crate::repository::user_repository::UserRepo;
-use crate::api::user::{create_user, get_user, delete_user, update_user};
-use crate::api::index::{index};
-use crate::api::auth::{logout, login};
+use crate::repository::api_auth_repository::ApiAuthRepo;
+use crate::api::storefront;
+use crate::api::admin;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -22,17 +22,22 @@ async fn main() -> std::io::Result<()> {
     let user_repository = UserRepo::init(db_data.clone()).await;
     let user_repository_data = Data::new(user_repository);
 
+    let api_auth_repository = ApiAuthRepo::init(db_data.clone()).await;
+    let api_auth_repository_data = Data::new(api_auth_repository);
+
     HttpServer::new(move || {
         App::new()
             .app_data(db_data.clone())
             .app_data(user_repository_data.clone())
-            .service(login)
-            .service(logout)
-            .service(index)
-            .service(get_user)
-            .service(create_user)
-            .service(delete_user)
-            .service(update_user)
+            .app_data(api_auth_repository_data.clone())
+            .service(storefront::auth::login)
+            .service(storefront::auth::logout)
+            .service(storefront::index::index)
+            .service(storefront::user::get_user)
+            .service(storefront::user::register)
+            .service(storefront::user::delete_user)
+            .service(storefront::user::update_user)
+            .service(admin::auth::create_auth)
     })
         .bind(("127.0.0.1", 8000))?
         .run()

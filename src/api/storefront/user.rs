@@ -4,9 +4,9 @@ use actix_web_httpauth::extractors::bearer::BearerAuth;
 
 use crate::repository::user_repository::UserRepo;
 use crate::model::user::{User, UserOutput, UserUpdateCreate};
-use crate::api::auth::auth;
+use crate::api::storefront::auth::auth;
 
-#[get("/user")]
+#[get("/storefront/user")]
 async fn get_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpResponse {
     let user_detail = auth(user_repo, bearer_auth.token()).await;
 
@@ -23,7 +23,7 @@ async fn get_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpRes
     }
 }
 
-#[delete("/user/delete")]
+#[delete("/storefront/user/delete")]
 async fn delete_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpResponse {
     let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
@@ -40,7 +40,7 @@ async fn delete_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> Http
     }
 }
 
-#[patch("/user/update")]
+#[patch("/storefront/user/update")]
 async fn update_user(user_repo: Data<UserRepo>, update_user: Json<UserUpdateCreate>, bearer_auth: BearerAuth) -> HttpResponse {
     let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
@@ -57,15 +57,15 @@ async fn update_user(user_repo: Data<UserRepo>, update_user: Json<UserUpdateCrea
     }
 }
 
-#[post("/user/create")]
-pub async fn create_user(user_repo: Data<UserRepo>, new_user: Json<UserUpdateCreate>) -> HttpResponse {
+#[post("/storefront/register")]
+pub async fn register(user_repo: Data<UserRepo>, new_user: Json<UserUpdateCreate>) -> HttpResponse {
     let user_detail = user_repo.get_user_by_email(new_user.email.as_str()).await;
 
     if !user_detail.is_err() {
         return HttpResponse::Ok().json("Email already in use");
     }
 
-    let user_detail = user_repo.create_user(new_user.clone()).await;
+    let user_detail = user_repo.create_user(new_user.clone(), vec!["ROLE_USER".to_string()]).await;
 
     match user_detail {
         Ok(_user) => HttpResponse::Ok().json(new_user),

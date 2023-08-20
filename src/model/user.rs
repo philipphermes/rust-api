@@ -7,6 +7,7 @@ pub struct User {
     pub email: String,
     pub password: String,
     pub token: String,
+    pub roles: Vec<String>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -14,7 +15,7 @@ pub struct UserOutput {
     pub id: Option<String>,
     pub email: String
 }
-
+//TODO admin
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 pub struct UserUpdateCreate{
     pub id: Option<String>,
