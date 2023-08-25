@@ -65,10 +65,10 @@ pub async fn register(user_repo: Data<UserRepo>, new_user: Json<UserUpdateCreate
         return HttpResponse::Ok().json("Email already in use");
     }
 
-    let user_detail = user_repo.create_user(new_user.clone(), vec!["ROLE_USER".to_string()]).await;
+    let user_detail = user_repo.create_user(new_user.clone(), vec!["ROLE_USER".to_string(), "ROLE_ADMIN".to_string()]).await;
 
     match user_detail {
-        Ok(_user) => HttpResponse::Ok().json(new_user),
+        Ok(user) => HttpResponse::Ok().json(user.inserted_id),
         Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
     }
 }

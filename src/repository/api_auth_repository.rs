@@ -1,7 +1,9 @@
 extern crate dotenv;
 
 use actix_web::web::{Data};
-use mongodb::{bson::{extjson::de::Error}, Collection};
+use mongodb::{bson::{extjson::de::Error, doc}, Collection};
+use mongodb::bson::oid::ObjectId;
+use mongodb::bson::Uuid;
 use mongodb::results::{InsertOneResult};
 use serde::de::Error as DefaultError;
 
@@ -28,6 +30,48 @@ impl ApiAuthRepo {
             Err(DefaultError::custom(api_auth.err().unwrap().to_string()))
         } else {
             Ok(api_auth.ok().unwrap())
+        }
+    }
+
+    pub async fn get_api_auth_by_token(&self, token: &str) -> Result<ApiAuth, Error> {
+        let filter = doc! {"token": token.to_string()};
+
+        let auth = self
+            .col
+            .find_one(filter, None)
+            .await;
+
+        if auth.is_err() {
+            Err(DefaultError::custom(auth.err().unwrap().to_string()))
+        } else {
+            let auth_data = auth.ok().unwrap();
+
+            if auth_data.is_none() {
+                return Err(DefaultError::custom("Auth not found"));
+            }
+
+            Ok(auth_data.unwrap())
+        }
+    }
+
+    pub async fn get_api_auth_by_id(&self, id: ObjectId) -> Result<ApiAuth, Error> {
+        let filter = doc! {"_id": id};
+
+        let auth = self
+            .col
+            .find_one(filter, None)
+            .await;
+
+        if auth.is_err() {
+            Err(DefaultError::custom(auth.err().unwrap().to_string()))
+        } else {
+            let auth_data = auth.ok().unwrap();
+
+            if auth_data.is_none() {
+                return Err(DefaultError::custom("Auth not found"));
+            }
+
+            Ok(auth_data.unwrap())
         }
     }
 }

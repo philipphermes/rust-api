@@ -2,7 +2,7 @@ extern crate dotenv;
 
 use actix_web::web::{Data};
 use mongodb::{bson::{extjson::de::Error, doc}, Collection};
-use mongodb::bson::Uuid;
+use mongodb::bson::oid::ObjectId;
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use serde::de::Error as DefaultError;
 use pwhash::bcrypt;
@@ -23,10 +23,10 @@ impl UserRepo {
 
     pub async fn create_user(&self, new_user: UserUpdateCreate, roles: Vec<String>) -> Result<InsertOneResult, Error> {
         let user = User {
-            id: Option::from(Uuid::new().to_string()),
+            id: None,
             email: new_user.email,
             password: bcrypt::hash(new_user.password.to_string()).unwrap(),
-            token: "".to_string(),
+            token: None,
             roles
         };
 
@@ -63,7 +63,7 @@ impl UserRepo {
         }
     }
 
-    pub async fn update_token(&self, id: Option<String>, token: String) -> Result<UpdateResult, Error> {
+    pub async fn update_token(&self, id: Option<ObjectId>, token: String) -> Result<UpdateResult, Error> {
         let filter = doc! {"_id": id};
         let new_user = doc! {
                 "$set":
@@ -83,7 +83,7 @@ impl UserRepo {
         }
     }
 
-    pub async fn delete_user(&self, id: &String) -> Result<DeleteResult, Error> {
+    pub async fn delete_user(&self, id: &ObjectId) -> Result<DeleteResult, Error> {
         let filter = doc! {"_id": id};
         let user_detail = self
             .col

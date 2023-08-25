@@ -18,7 +18,7 @@ pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<UserUpdateCreate>)
         Err(_err) => return HttpResponse::Unauthorized().json("User not found"),
     };
 
-    if !bcrypt::verify("password", current_user.password.as_str()) {
+    if !bcrypt::verify(auth_user.password.as_str(), current_user.password.as_str()) {
         return HttpResponse::Unauthorized().json("Invalid credentials");
     }
 
