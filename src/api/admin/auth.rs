@@ -1,10 +1,8 @@
 use actix_web::{web::Data, HttpResponse, post};
 use actix_web::web::{Json};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use mongodb::bson::{bson, Uuid};
-use mongodb::bson::Bson::ObjectId;
+use mongodb::bson::{Uuid};
 use mongodb::bson::extjson::de::Error;
-use serde_json::Value;
 
 use crate::repository::api_auth_repository::ApiAuthRepo;
 use crate::repository::user_repository::UserRepo;

@@ -3,7 +3,6 @@ extern crate dotenv;
 use actix_web::web::{Data};
 use mongodb::{bson::{extjson::de::Error, doc}, Collection};
 use mongodb::bson::oid::ObjectId;
-use mongodb::bson::Uuid;
 use mongodb::results::{InsertOneResult};
 use serde::de::Error as DefaultError;
 
