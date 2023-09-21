@@ -1,12 +1,13 @@
 # Rust API - Admin-Api
 
 ## Create Auth
-**Url:** http://127.0.0.1:3000/admin-api/auth/create
-**Method:** POST
-**Required:**
+__Url:__ http://127.0.0.1:3000/admin-api/auth/create \
+__Method:__ POST \
+__Required:__ 
 * Admin User
 * Bearer Token
-**Body:**
+
+__Body:__
 ```json
 {
     "name": "Test",
@@ -15,7 +16,7 @@
     ]
 }
 ```
-**Response:**
+__Response:__
 ```json
 {
     "_id": {
