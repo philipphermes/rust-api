@@ -9,7 +9,7 @@ use crate::repository::user_repository::UserRepo;
 use crate::model::api_auth::ApiAuth;
 use crate::storefront::auth::auth;
 
-#[post("/admin-api/auth/create")]
+#[post("/admin-api/auth.md/create")]
 pub async fn create_auth(user_repo: Data<UserRepo>, api_auth_repo: Data<ApiAuthRepo>, mut api_auth: Json<ApiAuth>, bearer_auth: BearerAuth) -> HttpResponse {
     let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
