@@ -46,9 +46,10 @@ async fn main() -> std::io::Result<()> {
             .service(storefront::user::update_user)
             .service(admin::auth::create_auth)
             .service(admin::category::create_category)
-            .service(admin::category::get_category)
             .service(admin::category::patch_category)
             .service(admin::category::delete_category)
+            .service(admin::category::get_category)
+            .service(admin::category::get_categories)
     })
         .bind(("127.0.0.1", 3000))?
         .run()

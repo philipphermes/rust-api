@@ -153,3 +153,66 @@ __Response:__
   ]
 }
 ```
+
+## Get Categories
+__Url:__ http://127.0.0.1:3000/admin-api/category \
+__Method:__ GET \
+__Required:__
+* Bearer Token
+* read_category scope
+
+__Response:__
+```json
+[
+  {
+    "_id": "b765fdf4-d036-4354-aab5-553409835431",
+    "description": "Test Category",
+    "products": [
+      {
+        "_id": "feb5f1c7-d527-4f04-bcf0-b80799ca9c17",
+        "sku": "100",
+        "description": "Test Prod",
+        "variants": [
+          {
+            "_id": "17dc7f3f-1131-48a5-82ae-6a3357bbc7d8",
+            "sku": "100-001",
+            "description": "Variante 1",
+            "price": 69.99,
+            "sale_price": null,
+            "image_url": "/100-001.jpeg"
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "_id": "e6e89a7b-5580-4456-940a-670a78e84667",
+    "description": "Test Category 2",
+    "products": [
+      {
+        "_id": "938ad347-36c0-4fbf-819f-5f0f8acb8d5c",
+        "sku": "101",
+        "description": "Test Prod",
+        "variants": [
+          {
+            "_id": "e6cc8a91-82c5-4419-b80b-78612b4c6a12",
+            "sku": "101-001",
+            "description": "Variante 1",
+            "price": 99.99,
+            "sale_price": null,
+            "image_url": "/101-001.jpeg"
+          },
+          {
+            "_id": "84f59cd7-495c-4689-8454-c1a3f9bb8528",
+            "sku": "101-002",
+            "description": "Variante 2",
+            "price": 94.99,
+            "sale_price": null,
+            "image_url": "/101-002.jpeg"
+          }
+        ]
+      }
+    ]
+  }
+]
+```
