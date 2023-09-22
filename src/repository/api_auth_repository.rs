@@ -1,8 +1,7 @@
 extern crate dotenv;
 
 use actix_web::web::{Data};
-use mongodb::{bson::{extjson::de::Error, doc}, Collection};
-use mongodb::bson::oid::ObjectId;
+use mongodb::{bson::{extjson::de::Error, doc, Uuid}, Collection};
 use mongodb::results::{InsertOneResult};
 use serde::de::Error as DefaultError;
 
@@ -19,7 +18,9 @@ impl ApiAuthRepo {
         ApiAuthRepo { col }
     }
 
-    pub async fn create_auth(&self, new_auth: ApiAuth) -> Result<InsertOneResult, Error> {
+    pub async fn create_auth(&self, mut new_auth: ApiAuth) -> Result<InsertOneResult, Error> {
+        new_auth.id = Option::from(Uuid::new().to_string());
+
         let api_auth = self
             .col
             .insert_one(new_auth, None)
@@ -53,7 +54,7 @@ impl ApiAuthRepo {
         }
     }
 
-    pub async fn get_api_auth_by_id(&self, id: ObjectId) -> Result<ApiAuth, Error> {
+    pub async fn get_api_auth_by_id(&self, id: String) -> Result<ApiAuth, Error> {
         let filter = doc! {"_id": id};
 
         let auth = self

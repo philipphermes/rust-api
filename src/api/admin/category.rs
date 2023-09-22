@@ -1,7 +1,7 @@
 use actix_web::{web::Data, HttpResponse, post, HttpRequest, get, patch, delete};
 use actix_web::web::{Json};
 use actix_web_httpauth::extractors::bearer::BearerAuth;
-use mongodb::bson::Uuid;
+use mongodb::bson::{doc, Uuid};
 
 use crate::repository::category_repository::CategoryRepo;
 use crate::repository::api_auth_repository::ApiAuthRepo;
@@ -32,7 +32,7 @@ pub async fn create_category(
     for (p_key, product) in category.clone().products.iter().enumerate() {
         category.products[p_key].id = Option::from(Uuid::new().to_string());
 
-        for (v_key, variant) in product.clone().variants.iter().enumerate() {
+        for (v_key, _variant) in product.clone().variants.iter().enumerate() {
             category.products[p_key].variants[v_key].id = Option::from(Uuid::new().to_string());
         }
     }
@@ -70,7 +70,7 @@ pub async fn patch_category(
         return HttpResponse::Unauthorized().json("Scopes read_category and write_category are required");
     }
 
-    if (category.id.is_none()) {
+    if category.id.is_none() {
         return HttpResponse::BadRequest().json("Id is required")
     }
 
@@ -150,6 +150,27 @@ pub async fn get_category(req: HttpRequest, api_auth_repo: Data<ApiAuthRepo>, ca
 
     match category {
         Ok(category_res) => HttpResponse::Ok().json(category_res),
+        Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
+    }
+}
+
+#[get("/admin-api/category")]
+pub async fn get_categories(api_auth_repo: Data<ApiAuthRepo>, category_repo: Data<CategoryRepo>, bearer_auth: BearerAuth) -> HttpResponse {
+    let api_auth = api_auth(api_auth_repo, bearer_auth.token()).await;
+
+    let auth = match api_auth {
+        Ok(auth) => auth,
+        Err(_err) => return HttpResponse::Unauthorized().json("Unauthorized"),
+    };
+
+    if !auth.scopes.contains(&"read_category".to_string()) {
+        return HttpResponse::Unauthorized().json("Scope read_category is required");
+    }
+
+    let categories = category_repo.get_all(doc! {}).await; //TODO filters
+
+    match categories {
+        Ok(categories_res) => HttpResponse::Ok().json(categories_res),
         Err(err) => HttpResponse::InternalServerError().json(err.to_string()),
     }
 }

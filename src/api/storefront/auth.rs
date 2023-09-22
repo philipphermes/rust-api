@@ -22,7 +22,7 @@ pub async fn login(user_repo: Data<UserRepo>, auth_user: Json<UserUpdateCreate>)
         return HttpResponse::Unauthorized().json("Invalid credentials");
     }
 
-    let user_update = user_repo.update_token(current_user.id, Uuid::new().to_string()).await;
+    let user_update = user_repo.update_token(current_user.id.unwrap(), Uuid::new().to_string()).await;
 
     match user_update {
         Ok(_user) => (),
@@ -46,7 +46,7 @@ pub async fn logout(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpR
         Err(_err) => return HttpResponse::Unauthorized().json("Invalid credentials"),
     };
 
-    let user_detail = user_repo.update_token(current_user.id, "".to_string()).await;
+    let user_detail = user_repo.update_token(current_user.id.unwrap(), "".to_string()).await;
 
     match user_detail {
         Ok(_user) => HttpResponse::Ok().json("logged out"),

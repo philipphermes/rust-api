@@ -11,14 +11,7 @@ async fn get_user(user_repo: Data<UserRepo>, bearer_auth: BearerAuth) -> HttpRes
     let user_detail = auth(user_repo, bearer_auth.token()).await;
 
     match user_detail {
-        Ok(user) => {
-            let user_out = UserOutput {
-                id: user.id,
-                email: user.email
-            };
-
-            HttpResponse::Ok().json(user_out)
-        },
+        Ok(user) => HttpResponse::Ok().json(user),
         Err(_err) => HttpResponse::Unauthorized().json("Invalid credentials"),
     }
 }
@@ -49,11 +42,18 @@ async fn update_user(user_repo: Data<UserRepo>, update_user: Json<UserUpdateCrea
         Err(_err) => return HttpResponse::Unauthorized().json("Invalid credentials"),
     }
 
-    let user_update = user_repo.update_user(update_user.clone()).await;
+    let user_update = user_repo.update_user(update_user.clone(), bearer_auth.token()).await;
 
     match user_update {
-        Ok(_user) => HttpResponse::Ok().json("User was updated"),
-        Err(err) => HttpResponse::NotFound().body(err.to_string()),
+        Ok(_user) => {},
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+    }
+
+    let user = user_repo.get_user_by_token(bearer_auth.token()).await;
+
+    match user {
+        Ok(user_res) => HttpResponse::Ok().json(user_res),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
 }
 
@@ -65,11 +65,18 @@ pub async fn register(user_repo: Data<UserRepo>, new_user: Json<UserUpdateCreate
         return HttpResponse::Ok().json("Email already in use");
     }
 
-    let user_detail = user_repo.create_user(new_user.clone(), vec!["ROLE_USER".to_string(), "ROLE_ADMIN".to_string()]).await;
+    let user_register = user_repo.create_user(new_user.clone(), vec!["ROLE_USER".to_string(), "ROLE_ADMIN".to_string()]).await;
 
-    match user_detail {
-        Ok(user) => HttpResponse::Ok().json(user.inserted_id),
-        Err(err) => HttpResponse::InternalServerError().body(err.to_string()),
+    match user_register {
+        Ok(_user) => {},
+        Err(err) => return HttpResponse::InternalServerError().body(err.to_string()),
+    }
+
+    let user = user_repo.get_user_by_email(new_user.email.as_str()).await;
+
+    match user {
+        Ok(user_res) => HttpResponse::Ok().json(user_res),
+        Err(err) => HttpResponse::InternalServerError().body(err.to_string())
     }
 }
 

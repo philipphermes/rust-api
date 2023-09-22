@@ -9,7 +9,7 @@ use crate::repository::user_repository::UserRepo;
 use crate::model::api_auth::ApiAuth;
 use crate::storefront::auth::auth;
 
-#[post("/admin-api/auth.md/create")]
+#[post("/admin-api/auth/create")]
 pub async fn create_auth(user_repo: Data<UserRepo>, api_auth_repo: Data<ApiAuthRepo>, mut api_auth: Json<ApiAuth>, bearer_auth: BearerAuth) -> HttpResponse {
     let user_detail = auth(user_repo.clone(), bearer_auth.token()).await;
 
@@ -26,29 +26,12 @@ pub async fn create_auth(user_repo: Data<UserRepo>, api_auth_repo: Data<ApiAuthR
 
     let api_auth_create = api_auth_repo.create_auth(api_auth.clone()).await;
 
-    let id_json = match api_auth_create {
-        Ok(created_auth) => serde_json::to_value(created_auth.inserted_id),
+    match api_auth_create {
+        Ok(_) => {},
         Err(err) => return HttpResponse::InternalServerError().json(err.to_string()),
     };
 
-    let value = match id_json {
-        Ok(val) => val,
-        Err(err) => return HttpResponse::InternalServerError().json(err.to_string()),
-    };
-
-    let id = match value["$oid"].as_str() {
-        None => return HttpResponse::InternalServerError().json("oid not found".to_string()),
-        Some(oid) => oid,
-    };
-
-    let o_id = mongodb::bson::oid::ObjectId::parse_str(id);
-
-    let obj_id = match o_id {
-        Ok(objet_id) => objet_id,
-        Err(_) => return HttpResponse::InternalServerError().json("Converting failed".to_string()),
-    };
-
-    let auth = api_auth_repo.get_api_auth_by_id(obj_id).await;
+    let auth = api_auth_repo.get_api_auth_by_token(api_auth.token.clone().unwrap().as_str()).await;
 
     match auth {
         Ok(auth_res) => HttpResponse::Ok().json(auth_res),

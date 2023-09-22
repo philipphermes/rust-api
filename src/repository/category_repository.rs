@@ -1,11 +1,11 @@
 extern crate dotenv;
 
 use actix_web::web::{Data};
-use mongodb::{bson::{extjson::de::Error, doc}, Collection, bson};
-use mongodb::bson::oid::ObjectId;
+use futures::TryStreamExt;
+use mongodb::{bson::{extjson::de::Error, doc}, Collection, bson, Cursor};
+use mongodb::bson::Document;
 use mongodb::results::{DeleteResult, InsertOneResult, UpdateResult};
 use serde::de::Error as DefaultError;
-use serde_json::Number;
 
 use crate::db_client::DbClient;
 use crate::model::category::Category;
@@ -83,6 +83,32 @@ impl CategoryRepo {
 
             Ok(category_data.unwrap())
         }
+    }
+
+    pub async fn get_all(&self, filters: impl Into<Option<Document>>) -> Result<Vec<Category>, Error> {
+        //TODO pagination
+        let categories = self
+            .col
+            .find( filters, None)
+            .await;
+
+        if categories.is_err() {
+            return Err(DefaultError::custom(categories.err().unwrap().to_string()));
+        }
+
+        let mut categories_cursor: Cursor<Category> = categories.ok().unwrap();
+
+        let mut categories: Vec<Category> = Vec::new();
+
+        while let Some(category) = categories_cursor
+            .try_next()
+            .await
+            .ok()
+            .expect("Error mapping through cursor")
+        {
+            categories.push(category)
+        }
+        Ok(categories)
     }
 }
 
