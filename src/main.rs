@@ -50,6 +50,7 @@ async fn main() -> std::io::Result<()> {
             .service(admin::category::delete_category)
             .service(admin::category::get_category)
             .service(admin::category::get_categories)
+            .service(admin::product::create_product)
     })
         .bind(("127.0.0.1", 3000))?
         .run()
